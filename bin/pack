@@ -1,0 +1,24 @@
+#!/bin/bash
+
+echo {} | jq . > /dev/null || exit
+
+name=`cat package.json | jq -r .name`
+version=`cat package.json | jq -r .version`
+
+rm -rf dist
+mkdir dist
+
+cp *.js dist
+cp config.example.ini dist
+cp package.json dist
+cp yarn.lock dist
+echo $version > dist/VERSION
+
+cd dist
+yarn --prod
+rm yarn.lock
+cd ..
+
+ln -s dist $name
+tar zchf ${name}_${version}.tgz --owner root --group root $name
+rm -f $name
