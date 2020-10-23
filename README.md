@@ -3,6 +3,7 @@
 | name | remark |
 | --- | --- |
 | port | listening port |
+| gateway | official/upstream gateway |
 | msgMask | replace message content with this mask |
 | jpush.appKey | app key of jpush |
 | jpush.secret | secret key of jpush |

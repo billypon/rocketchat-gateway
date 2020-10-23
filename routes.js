@@ -15,11 +15,11 @@ router.get('/', (req, res) => {
 
 // see README: parameters from Rocket.Chat
 router.post('/push/:service/send', async (req, res) => {
-  const { params: { service }, body: { token, options } } = req
+  const { params: { service }, body: { token, options }, headers } = req
   const { title, badge, sound, topic, userId, uniqueId, notId, payload = { } } = options
   const text = config.msgMask || options.text
   const platform = service === 'apn' ? 'ios' : 'android'
-  logger.info({
+  const fields = {
     service,
     platform,
     registerId: token,
@@ -36,23 +36,43 @@ router.post('/push/:service/send', async (req, res) => {
       type: payload.type,
       sender: payload.sender,
     },
-  }, 'push notification')
-  try {
-    await jpush
-      .push()
-      .setPlatform(platform)
-      .setAudience(JPush.registration_id(token))
-      .setNotification(
-        JPush.ios(`${ title }\n${ text }`, sound, badge, null, payload, options.apn.category),
-        JPush.android(text, title, null, payload, 1, options.apn.category, 2),
-      )
-      .send()
-  } catch ({ name, httpCode, response }) {
-    logger.error({
-      error: name,
-      httpCode,
-      response: response && JSON.parse(response),
-    }, 'JPush Error')
+  }
+  if (!config.gateway || platform !== 'ios') {
+    logger.info(fields, 'push notification')
+    try {
+      await jpush
+        .push()
+        .setPlatform(platform)
+        .setAudience(JPush.registration_id(token))
+        .setNotification(
+          JPush.ios(`${ title }\n${ text }`, sound, badge, null, payload, options.apn.category),
+          JPush.android(text, title, null, payload, 1, options.apn.category, 2),
+        )
+        .send()
+    } catch ({ name, httpCode, response }) {
+      logger.error({
+        error: name,
+        httpCode,
+        response: response && JSON.parse(response),
+      }, 'JPush Error')
+    }
+  } else {
+    logger.info(fields, 'forward notification')
+    try {
+      await axios.post(`${ config.gateway }/push/${ service }/send`, { token, options }, {
+        headers: {
+          authorization: headers.authorization,
+        }
+      })
+    } catch ({ message, response = { } }) {
+      const { status, data, headers } = response
+      logger.error({
+        message,
+        status,
+        data,
+        headers,
+      }, 'forward notification error')
+    }
   }
   res.write('')
   res.end()

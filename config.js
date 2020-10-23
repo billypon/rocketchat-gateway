@@ -15,6 +15,7 @@ const logger = {
 
 module.exports = {
   port: config.port || 8888,
+  gateway: config.gateway,
   msgMask: config.msgMask,
   jpush: config.jpush,
   logger,
