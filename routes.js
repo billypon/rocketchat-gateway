@@ -16,7 +16,8 @@ router.get('/', (req, res) => {
 // see README: parameters from Rocket.Chat
 router.post('/push/:service/send', async (req, res) => {
   const { params: { service }, body: { token, options }, headers } = req
-  const { title, badge, sound, topic, userId, uniqueId, notId, payload = { } } = options
+  const { title, sound, topic, userId, uniqueId, notId, payload = { } } = options
+  let { badge } = options
   const text = config.msgMask || options.text
   const platform = service === 'apn' ? 'ios' : 'android'
   const fields = {
@@ -36,6 +37,11 @@ router.post('/push/:service/send', async (req, res) => {
       type: payload.type,
       sender: payload.sender,
     },
+  }
+  if (payload.type === 'c') {
+    badge++
+    options.badge = badge
+    fields.badge = badge
   }
   if (!config.gateway || platform !== 'ios') {
     logger.info(fields, 'push notification')
