@@ -69,6 +69,7 @@ router.post('/push/:service/send', async (req, res) => {
       logger.error({
         message,
         status,
+        fields,
         data,
         headers,
       }, 'forward notification error')
