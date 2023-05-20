@@ -9,7 +9,7 @@ const router = express.Router()
 const jpush = JPush.buildClient(config.jpush.appKey, config.jpush.secret)
 
 router.get('/', (req, res) => {
-  res.write('Rocket.Chat PushGateway')
+  res.write('Rocket.Chat Push Gateway')
   res.end()
 })
 
